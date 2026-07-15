@@ -50,3 +50,10 @@ Open `index.html` with VS Code Live Server. Upload an Excel file with columns `S
 - Fixed Maximum call stack size exceeded for large historical datasets.
 - The session range and recommendation engine now use memory-safe reductions.
 - Restores the What Usually Comes Next transition section after import.
+
+## Historical Engine v0.1.2 Mobile
+- Adds a dedicated responsive layout for iPhone, Android, and tablets.
+- Makes the 24-hour chart horizontally swipeable instead of compressing it.
+- Hides permanent graph labels on phones and uses tap tooltips.
+- Enlarges touch targets and stacks dashboard panels on narrow screens.
+- Makes tables horizontally scrollable.

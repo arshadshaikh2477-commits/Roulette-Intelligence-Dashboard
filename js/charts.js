@@ -4,6 +4,9 @@ window.RIDCharts = (() => {
   const pointLabelsPlugin = {
     id: "ridPointLabels",
     afterDatasetsDraw(chart) {
+      // Phone screens use tap tooltips instead of permanent labels to avoid overlap.
+      if (window.matchMedia("(max-width: 768px)").matches) return;
+
       const { ctx } = chart;
 
       chart.data.datasets.forEach((dataset, datasetIndex) => {
@@ -67,6 +70,7 @@ window.RIDCharts = (() => {
     ];
 
     const hasSelection = selectedNumbers.length > 0;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
     const source = analysis.hourlyCustom;
     const data = hasSelection ? [0, ...source.map(row => row.rate)] : [];
     const topSixIndexes = hasSelection ? getTopSixIndexes(source) : new Set();
@@ -92,9 +96,11 @@ window.RIDCharts = (() => {
       pointBackgroundColor: pointColors,
       pointBorderColor: pointBorders,
       pointBorderWidth: 2,
-      pointRadius: pointRadii,
-      pointHoverRadius: pointRadii.map(radius => radius ? radius + 2 : 0),
-      borderWidth: 3,
+      pointRadius: isMobile
+        ? pointRadii.map(radius => radius ? Math.max(radius, 5) : 0)
+        : pointRadii,
+      pointHoverRadius: pointRadii.map(radius => radius ? radius + 3 : 0),
+      borderWidth: isMobile ? 3.5 : 3,
       tension: .28,
       fill: true,
       spanGaps: false,
@@ -118,12 +124,21 @@ window.RIDCharts = (() => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 50, right: 18, left: 8, bottom: 8 } },
+        layout: {
+          padding: isMobile
+            ? { top: 24, right: 16, left: 4, bottom: 8 }
+            : { top: 50, right: 18, left: 8, bottom: 8 }
+        },
         interaction: { mode: "nearest", intersect: false },
         plugins: {
           legend: {
             display: hasSelection,
-            labels: { color: "#dce7f6", usePointStyle: true }
+            labels: {
+              color: "#dce7f6",
+              usePointStyle: true,
+              boxWidth: isMobile ? 10 : 18,
+              font: { size: isMobile ? 11 : 12 }
+            }
           },
           tooltip: {
             enabled: hasSelection,
@@ -146,13 +161,22 @@ window.RIDCharts = (() => {
         },
         scales: {
           x: {
-            ticks: { color: "#8fa1b8", maxRotation: 0, autoSkip: false },
+            ticks: {
+              color: "#8fa1b8",
+              maxRotation: 0,
+              autoSkip: false,
+              font: { size: isMobile ? 10 : 12 }
+            },
             grid: { color: "rgba(143,161,184,.08)" }
           },
           y: {
             beginAtZero: true,
             max: 100,
-            ticks: { color: "#8fa1b8", callback: value => `${value}%` },
+            ticks: {
+              color: "#8fa1b8",
+              font: { size: isMobile ? 10 : 12 },
+              callback: value => `${value}%`
+            },
             grid: { color: "rgba(143,161,184,.08)" }
           }
         }

@@ -65,6 +65,7 @@ document.getElementById("app").innerHTML = `
       <div>
         <h2>Hourly Hit % — 24 Hours</h2>
         <p>The six highest-performing individual hours are highlighted in red.</p>
+        <p class="mobile-chart-hint">Swipe the graph sideways and tap a point to view its percentage and hits.</p>
       </div>
     </div>
     <div class="chart-area"><canvas id="hourlyPerformanceChart"></canvas></div>
