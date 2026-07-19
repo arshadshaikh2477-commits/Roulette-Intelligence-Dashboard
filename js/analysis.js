@@ -7,7 +7,8 @@ window.RIDAnalysis=(()=>{function parseDate(v){if(v instanceof Date&&!isNaN(v))r
   const transitions=Array.from({length:37},()=>Array(37).fill(0));
   for(let i=0;i<ordered.length-1;i++){
     const current=ordered[i].number,next=ordered[i+1].number;
-    if(Number.isInteger(current)&&Number.isInteger(next)&&current>=0&&current<=36&&next>=0&&next<=36)transitions[current][next]++;
+    // Keep all 37 starting numbers, but exclude 0 as a possible "next" result.
+    if(Number.isInteger(current)&&Number.isInteger(next)&&current>=0&&current<=36&&next>=1&&next<=36)transitions[current][next]++;
   }
   return transitions.map((counts,number)=>{
     let bestNext=null,bestCount=0,total=0;

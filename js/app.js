@@ -131,7 +131,7 @@ document.getElementById("app").innerHTML = `
     <div class="panel-heading">
       <div>
         <h2>What Usually Comes Next?</h2>
-        <p>For each roulette number, this shows the number that appeared most often immediately afterward in the uploaded data.</p>
+        <p>For each roulette number, this shows the non-zero number that appeared most often immediately afterward in the uploaded data. Zero is excluded.</p>
       </div>
     </div>
     <div id="nextNumberTable" class="next-number-grid">
