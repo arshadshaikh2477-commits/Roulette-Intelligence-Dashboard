@@ -128,18 +128,25 @@ document.getElementById("app").innerHTML = `
 
 
   <section class="panel">
-    <div class="panel-heading">
+    <div class="panel-heading transition-heading">
       <div>
         <h2>What Usually Comes Next?</h2>
-        <p>For each roulette number, this shows the non-zero number that appeared most often immediately afterward in the uploaded data. Zero is excluded.</p>
+        <p>Select any number from 0–36. The dashboard ranks all 37 possible next numbers—including a repeat of the selected number—by how often each appeared on the immediately following spin.</p>
       </div>
+      <label class="transition-number-control">
+        <span>Select number</span>
+        <select id="nextAnchorNumber">
+          <option value="">Choose 0–36</option>
+          ${Array.from({length:37},(_,number)=>`<option value="${number}">${number}</option>`).join("")}
+        </select>
+      </label>
     </div>
-    <div id="nextNumberTable" class="next-number-grid">
-      <div class="placeholder-content">Upload data to calculate number-to-number transitions.</div>
+    <div id="nextNumberAnalysis" class="transition-analysis">
+      <div class="placeholder-content">Upload data and select one number from 0–36.</div>
     </div>
   </section>
 
-  <div class="footer-note">RID v1.5 · Profit calculations use separate account balances and stop at bankroll exhaustion.</div>
+  <div class="footer-note">RID Historical Engine v0.1.6 · Profit calculations use separate account balances and stop at bankroll exhaustion.</div>
 </div>`;
 
 let RID_ROWS = [];
@@ -178,6 +185,10 @@ document.addEventListener("strategySelectionChanged", () => {
 });
 
 document.getElementById("printBtn").addEventListener("click", () => window.print());
+
+document.getElementById("nextAnchorNumber").addEventListener("change", () => {
+  renderFollowingNumberAnalysis();
+});
 
 
 function renderDataHealth(report) {
@@ -237,7 +248,7 @@ function renderAll() {
   renderInsights(RIDInsights.build(RID_ANALYSIS));
   renderTopNumbers(RID_ANALYSIS.frequency);
   renderRecommendation(RIDAnalysis.recommendNextSix(RID_ROWS,16));
-  renderNextNumberTable(RIDAnalysis.nextNumberMap(RID_ROWS));
+  renderFollowingNumberAnalysis();
   renderRange();
 }
 
@@ -292,6 +303,69 @@ function getBestSession(hourlyRows) {
   return sessions.sort((a, b) =>
     b.hits - a.hits || b.rate - a.rate || a.start - b.start
   )[0];
+}
+
+
+function renderFollowingNumberAnalysis() {
+  const container = document.getElementById("nextNumberAnalysis");
+  const select = document.getElementById("nextAnchorNumber");
+  if (!container || !select) return;
+
+  if (!RID_ROWS.length) {
+    container.innerHTML = `<div class="placeholder-content">Upload data and select one number from 0–36.</div>`;
+    return;
+  }
+
+  if (select.value === "") {
+    container.innerHTML = `<div class="placeholder-content">Select one number from 0–36 to rank the next-spin results.</div>`;
+    return;
+  }
+
+  const selectedNumber = Number(select.value);
+  const result = RIDAnalysis.followingNumberRelationships(RID_ROWS, selectedNumber);
+
+  if (!result.outgoingTransitions) {
+    container.innerHTML = `<div class="placeholder-content">There is no following spin available after number ${selectedNumber} in the uploaded data.</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="transition-overview">
+      <div><span>Selected number</span><strong>${selectedNumber}</strong></div>
+      <div><span>${selectedNumber} appearances</span><strong>${result.selectedAppearances.toLocaleString()}</strong></div>
+      <div><span>Following spins found</span><strong>${result.outgoingTransitions.toLocaleString()}</strong></div>
+      <div><span>All immediate transitions</span><strong>${result.outgoingTransitions.toLocaleString()}</strong></div>
+      <div><span>Self repeats found</span><strong>${result.selfTransitions.toLocaleString()}</strong></div>
+      <div><span>Ranked next numbers</span><strong>${result.relationships.length}</strong></div>
+    </div>
+    <p class="calculation-note transition-note">
+      Each result uses the very next chronological spin after ${selectedNumber}. Percentage = that pair's immediate appearances ÷ all valid immediate transitions after ${selectedNumber}. The ranking includes all 37 possible next numbers, including ${selectedNumber}–${selectedNumber} when the same number repeats.
+    </p>
+    <div class="table-wrap transition-table-wrap">
+      <table class="transition-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Number Pair</th>
+            <th>Immediate Appearances</th>
+            <th>Percentage</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${result.relationships.map((item,index)=>`
+            <tr>
+              <td>#${index+1}</td>
+              <td><strong>${selectedNumber}–${item.number}</strong></td>
+              <td>${item.count.toLocaleString()}</td>
+              <td>${item.rate.toFixed(2)}%</td>
+              <td><strong>${selectedNumber}–${item.number} (${item.count.toLocaleString()}) ${item.rate.toFixed(2)}%</strong></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderHourlyTable(analysis, customNumbers) {
@@ -541,17 +615,6 @@ function renderRecommendation(recommendation) {
   `;
 }
 
-
-function renderNextNumberTable(rows) {
-  const container = document.getElementById("nextNumberTable");
-  if (!container) return;
-  container.innerHTML = rows.map(item => `
-    <div class="next-number-card">
-      <div class="next-number-origin"><span>After</span><strong>${item.number}</strong></div>
-      <div class="next-number-arrow">→</div>
-      <div class="next-number-result"><span>Most often</span><strong>${item.nextNumber === null ? "—" : item.nextNumber}</strong><small>${item.count} times · ${item.rate.toFixed(2)}%</small></div>
-    </div>`).join("");
-}
 
 function renderRange() {
   const valid = RID_ROWS.filter(row => row.time);
